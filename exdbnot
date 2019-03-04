@@ -17,6 +17,7 @@ check_options(){
 			    echo -e "\033[1mUSAGE\033[0m\nexdbnot /home/$(whoami)/Desktop/database.sql.gz &\n"
 			    echo -e "\033[1mOPTIONS\033[0m"
 			    echo -e "\033[1m-h\033[0m, \033[1m--help\033[0m        show this help\n"
+			    echo -e "\033[1mNOTES\033[0m\nExport the variable SLACKWEBHOOK with the webhook url to your .bashrc or .profile"
 			    exit;
 			    ;;
 		    *)
