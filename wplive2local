@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+
+# Converts the current live versions database to a database that can be run locally 
+#ssh_hostname="production-restore"
+while test $# -gt 0; do
+        case "$1" in
+                -h|--help)
+                        echo "$package - attempt to capture frames"
+                        echo " "
+                        echo "$package [options] application [arguments]"
+                        echo " "
+                        echo "options:"
+                        echo "-h, --help                show brief help"
+                        echo "-s                        specifies an ssh user and hostname"
+                        echo "-d                        specifies a remote database"
+                        echo "-u                        specifies a remote database user"
+                        exit 0
+                        ;;
+                -s)
+                        shift
+                        if test $# -gt 0; then
+                                sshhostname=$1
+                        else
+                                echo "no ssh user and host specified"
+                                exit 1
+                        fi
+                        shift
+                        ;;
+                -d)
+                        shift
+                        if test $# -gt 0; then
+                                dbname=$1
+                        else
+                                echo "no remote database specified"
+                                exit 1
+                        fi
+                        shift
+                        ;;
+                -u)
+                        shift
+                        if test $# -gt 0; then
+                                dbusername=$1
+                        else
+                                echo "no remote database user specified"
+                                exit 1
+                        fi
+                        shift
+                        ;;
+#                --action*)
+#                        export PROCESS=`echo $1 | sed -e 's/^[^=]*=//g'`
+#                        shift
+#                        ;;
+                *)
+                        break
+                        ;;
+        esac
+done
+
+if [ -z ${sshhostname+x} ] || [ -z ${dbname+x} ] || [ -z ${dbusername+x} ]; then
+	#statements
+	echo "They are not all set."
+        exit;
+fi
+
+read -s -p "DB Password: " dbpassword
+echo -e "\n"
+echo "Remote Site URL:"
+read remoteurl
+echo "Local Site URL:"
+read localurl
+timestamp=$(/bin/date +%Y%m%dT%H%M%S)
+dbname1=$dbname
+dbname1+="_"
+filename="$dbname1$timestamp.sql"
+filepath="/tmp/$filename"
+#retrieve_dump
+dump_database() {
+	command="mysqldump -u$dbusername -p$dbpassword --databases $dbname > $filepath; sed -i.bak s/$remoteurl/$localurl/g $filepath;  gzip $filepath" 
+	/home/mdraper/bin/ssh-color-ubuntu.sh --no-tab $sshhostname $command > /dev/null
+}
+retrieve_dump() {
+	rsync -az $sshhostname:$filepath.gz /tmp > /dev/null
+}
+import_dump() {
+	mysqlimportgz /tmp/$filename.gz
+}
+{ dump_database; retrieve_dump; } &> /dev/null
+wait
+slacknot -w $SLACKWEBHOOK -t ":floppy_disk:wplive2local" -b "The database \`$dbname\` on \`$sshhostname\` has been exported and downloaded to \`$HOSTNAME\`." -c "#3687FF" -f "Yeah baby." --fallback "wplive2local: The database \`$dbname\` on \`$sshhostname\` has been exported and downloaded to \`$HOSTNAME\`." > /dev/null

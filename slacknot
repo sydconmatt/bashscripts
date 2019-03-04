@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+#
+#          name: slacknot
+#        author: Matthew Draper
+#   description: Sends slack notifications to a webhook url. Useful for sending notifications for 
+#                scripts or processess running in the background or detached from terminal.
+# last modified: 03/01/2019
+#
+
+TS=$(date +%s)
+
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+    -h|--help)
+    echo -e "\n\033[1m\033[96mSLACKNOT\033[0m\n\nslacknot is an simple program used to send notifications to a slack channel via a webhook url.\n"
+    echo -e "\033[1m-h\033[0m, \033[1m--help\033[0m        show this help"
+    echo -e "\033[1m-b\033[0m, \033[1m--body\033[0m        sets the body or the 'text' of the message"
+    echo -e "\033[1m-c\033[0m, \033[1m--color\033[0m       sets the color of the bar on the left hand side of the message"
+    echo -e "\033[1m-f\033[0m, \033[1m--footer\033[0m      sets the footer of the message"
+    echo -e "\033[1m--fallback\033[0m        sets the fallback text for the message"
+    echo -e "\033[1m-t\033[0m, \033[1m--title\033[0m       sets the fallback text for the message"
+    echo -e "\033[1m-w\033[0m, \033[1m--webhook\033[0m     sets the webhook url\n\n"
+    exit;
+    ;;
+    -b|--body)
+    TEXT="$2"
+    shift
+    shift
+    ;;
+    -c|--color)
+    COLOR="$2"
+    shift
+    shift
+    ;;
+    -f|--footer)
+    FOOTER="$2"
+    shift
+    shift
+    ;;
+    --fallback)
+    FALLBACK="$2"
+    shift
+    shift
+    ;;
+    -t|--title)
+    TITLE="$2"
+    shift
+    shift
+    ;;
+    -w|--webhook)
+    WEBHOOKURL="$2"
+    shift
+    shift
+    ;;
+    *)
+    echo -e "\nYou specified an unknown option '$2'"
+    exit;
+    ;;
+esac
+done
+
+if [ -z "$TEXT" ] || [ -z "$COLOR" ] || [ -z "$FOOTER" ] || [ -z "$FALLBACK" ] || [ -z "$TITLE" ] || [ -z "$WEBHOOKURL" ]; then
+  echo "Please use all necessary arguments."
+  exit;
+fi
+
+results=$(curl -sS -X POST $WEBHOOKURL -H 'Content-Type: application/json' -d "{
+    \"attachments\": [
+        {
+            \"fallback\": \"$FALLBACK\",
+            \"color\": \"$COLOR\",
+            \"title\": \"$TITLE\",
+            \"text\": \"$TEXT\",
+            \"footer\": \"$FOOTER\",
+            \"ts\": $TS
+        }
+    ]
+}")
+if [ "$results" = "ok" ]; then
+  echo -e "\n\033[1m\033[92mSuccess!\033[0m"
+else
+  echo -e "\n\033[1m\033[91mFailed!\033[0m"
+fi

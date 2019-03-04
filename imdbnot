@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+#
+#          name: imdbnot
+#        author: Matthew Draper
+#   description: Runs db import of a .sql.gz file as a background process. Uses slack to notify when the import is completed.
+# last modified: 03/01/2019
+#
+
+check_options(){
+	while [[ $# -gt 0 ]]
+	do
+		key="$1"
+		case $key in
+		    -h|--help)
+			    echo -e "\n\033[1m\033[96mIMDBNOT\033[0m\n\nimdbnot runs db import of a .sql.gz file and is meant to be run as a detached background process(&). Uses slack to notify when the import is completed.\n"
+			    echo -e "\033[1mUSAGE\033[0m\nimdbnot /home/$(whoami)/Desktop/database.sql.gz &\n"
+			    echo -e "\033[1mOPTIONS\033[0m"
+			    echo -e "\033[1m-h\033[0m, \033[1m--help\033[0m        show this help\n"
+			    exit;
+			    ;;
+		    *)
+				return
+			    ;;
+		esac
+	done
+}
+
+check_options "$@"
+
+# This script is meant to be run with dump files that contain CREATE DATABASE statements. Use --databases option when exporting with mysqldump
+FILEPATH=$1
+{ mysqlimportgz $1 >> /tmp/imdbnot_$(date +%Y%m%dT%H%M%S); } &> /dev/null
+wait
+slacknot -w $SLACKWEBHOOK -t ":floppy_disk:imdbnot" -b "Your file \`$FILEPATH\` on \`$HOSTNAME\` has been imported." -c "#3687FF" -f "Yeah baby." --fallback "MySql Import: Your file($FILEPATH) on $HOSTNAME has been imported." > /dev/null

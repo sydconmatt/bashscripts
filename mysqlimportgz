@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+#
+#          name: mysqlimportgz
+#        author: Matthew Draper
+#   description: Runs db export of a database or databases into a .sql.gz file.
+# last modified: 03/01/2019
+#
+
+check_options(){
+	while [[ $# -gt 0 ]]
+	do
+		key="$1"
+		case $key in
+		    -h|--help)
+			    echo -e "\n\033[1m\033[96mMYSQLIMPORTGZ\033[0m\n\nmysqlimportgz runs an import of a .sql.gz file into a database.\n"
+			    echo -e "\033[1mUSAGE\033[0m\nmysqlimportgz abc123_$(date +%Y%m%dT%H%M%S).sql.gz\n"
+			    echo -e "\033[1mOPTIONS\033[0m"
+			    echo -e "\033[1m-h\033[0m, \033[1m--help\033[0m        show this help\n"
+			    echo -e "\033[1mNOTES:\033[0m\nAlso see man mysql for more help\n"
+			    exit;
+			    ;;
+		    *)
+				return
+			    ;;
+		esac
+	done
+}
+
+check_options "$@"
+
+length=$(($#-1))
+if [ "$length" -gt "1" ]; then
+	#statements
+	array=${@:1:$length-1}
+	FILENAME="${@: -1}"
+	zcat $FILENAME | mysql < $array
+else
+	zcat $1 | mysql
+fi

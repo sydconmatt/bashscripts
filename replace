@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+#
+#          name: replace
+#        author: Matthew Draper
+#   description: Search and replace a given string withing a given file. Essentially an alias for sed.
+# last modified: 03/01/2019
+#
+BACKUP="0"
+
+while [[ $# -gt 0 ]]
+do
+	key="$1"
+	case $key in
+	    -h|--help)
+		    echo -e "\n\033[1m\033[96mREPLACE\033[0m\n\nreplace runs a search and replace for a given string within a given file. Essentially an alias for sed.\n"
+		    echo -e "\033[1mUSAGE\033[0m\nreplace -b -s teh -r the -f /home/$(whoami)/Desktop/database.sql \n"
+		    echo -e "\033[1mOPTIONS\033[0m"
+		    echo -e "\033[1m-h\033[0m, \033[1m--help\033[0m        show this help"
+		    echo -e "\033[1m-b\033[0m, \033[1m--backup\033[0m      create a backup file in the same directory before editing"
+		    echo -e "\033[1m-f\033[0m, \033[1m--file\033[0m        the file to perform the search and replace on"
+		    echo -e "\033[1m-r\033[0m, \033[1m--replace\033[0m     the replacement string"
+		    echo -e "\033[1m-s\033[0m, \033[1m--search\033[0m      the string to be replaced\n"
+		    exit;
+		    ;;
+	    -b|--backup)
+		    BACKUP="1"
+		    shift
+	    	;;
+	    -f|--file)
+		    FILE="$2"
+		    shift
+		    shift
+	    	;;
+	    -r|--replace)
+		    REPLACE="$2"
+		    shift
+		    shift
+	    	;;
+	    -s|--search)
+		    SEARCH="$2"
+		    shift
+		    shift
+	    	;;
+	    *)
+			echo -e "\nYou specified an unknown option '$2'"
+			exit;
+			;;
+	esac
+done
+
+if [ -z "$FILE+x" ] || [ -z "$REPLACE+x" ] || [ -z "$SEARCH+x" ]; then
+  echo "Please use all necessary arguments."
+  exit;
+fi
+
+if [ "$BACKUP" -eq "1" ]; then
+	#statements
+	sed -i.bak "s/$SEARCH/$REPLACE/g" $FILE
+	exit;
+fi
+
+sed -i "s/$SEARCH/$REPLACE/g" $FILE

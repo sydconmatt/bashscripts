@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+#
+#          name: exdbnot
+#        author: Matthew Draper
+#   description: Runs db export of a db into an .sql.gz file as a background process. Uses slack to notify when the export is completed.
+# last modified: 03/01/2019
+#
+
+check_options(){
+	while [[ $# -gt 0 ]]
+	do
+		key="$1"
+		case $key in
+		    -h|--help)
+			    echo -e "\n\033[1m\033[96mIMDBNOT\033[0m\n\nexdbnot runs db export of a db into an .sql.gz file and is meant to be run as a detached background process(&). Uses slack to notify when the export is completed.\n"
+			    echo -e "\033[1mUSAGE\033[0m\nexdbnot /home/$(whoami)/Desktop/database.sql.gz &\n"
+			    echo -e "\033[1mOPTIONS\033[0m"
+			    echo -e "\033[1m-h\033[0m, \033[1m--help\033[0m        show this help\n"
+			    exit;
+			    ;;
+		    *)
+				return
+			    ;;
+		esac
+	done
+}
+
+check_options "$@"
+
+
+LENGTH=$(($#))
+if [ "$LENGTH" -gt "1" ]; then
+	#statements
+	ARRAY=${@:1:$LENGTH-1}
+	FILENAME="${@: -1}"
+	# This script is meant to be run with dump files that contain CREATE DATABASE statements. Use --databases option when exporting with mysqldump
+	{ mysqldumpgz --databases $ARRAY $FILENAME >> /tmp/exdbnot_$(date +%Y%m%dT%H%M%S); } &> /dev/null
+else
+	FILENAME=$1
+	{ mysqldumpgz $FILENAME >> /tmp/exdbnot_$(date +%Y%m%dT%H%M%S); } &> /dev/null
+fi
+
+wait
+slacknot -w $SLACKWEBHOOK -t ":floppy_disk:exdbnot" -b "Your file \`$FILENAME\` on \`$HOSTNAME\` has been exported." -c "#3687FF" -f "Yeah baby." --fallback "MySql Export: Your file($FILEPATH) on $HOSTNAME has been exported." > /dev/null

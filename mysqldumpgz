@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+#
+#          name: mysqldumpgz
+#        author: Matthew Draper
+#   description: Runs db export of a database or databases into a .sql.gz file.
+# last modified: 03/01/2019
+#
+
+check_options(){
+	while [[ $# -gt 0 ]]
+	do
+		key="$1"
+		case $key in
+		    -h|--help)
+			    echo -e "\n\033[1m\033[96mMYSQLDUMPGZ\033[0m\n\nmysqldumpgz runs db export of a database or databases into a .sql.gz file.\n"
+			    echo -e "\033[1mUSAGE\033[0m\nmysqldumpgz --databases abc123 abc123_$(date +%Y%m%dT%H%M%S).sql\n"
+			    echo -e "\033[1mOPTIONS\033[0m"
+			    echo -e "\033[1m-h\033[0m, \033[1m--help\033[0m        show this help\n"
+			    echo -e "\033[1mNOTES:\033[0m\nAlso see man mysqldump for more help\n"
+			    exit;
+			    ;;
+		    *)
+				return
+			    ;;
+		esac
+	done
+}
+
+check_options "$@"
+
+LENGTH=$(($#))
+if [ "$LENGTH" -gt "1" ]; then
+	#statements
+	LENGTH=$(($#-1))
+	ARRAY=${@:1:$LENGTH}
+	FILENAME="${@: -1}"
+	mysqldump $array | gzip -c > $FILENAME.gz
+	exit;
+fi
+
+FILENAME=$1
+mysqldump --all-databases | gzip -c > $FILENAME.gz
