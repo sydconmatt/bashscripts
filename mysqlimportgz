@@ -34,7 +34,7 @@ if [ "$length" -gt "1" ]; then
 	#statements
 	array=${@:1:$length-1}
 	FILENAME="${@: -1}"
-	zcat $FILENAME | mysql < $array
+	zcat $FILENAME | mysql $array
 else
 	zcat $1 | mysql
 fi
